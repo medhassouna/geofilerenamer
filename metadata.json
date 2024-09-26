@@ -2,7 +2,8 @@
     "adm": [
         "administratif",
         "lieux_nommes",
-        "admin"
+        "admin",
+        "departements"
     ],
     "cad": [
         "cadastre"

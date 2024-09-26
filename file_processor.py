@@ -44,13 +44,40 @@ def process_files_in_directory(folder):
         # Afficher le chemin du dossier avant de traiter le groupe
         print(f"Renommage des fichiers dans le dossier : {file_dir}")
 
+        # Proposer de modifier le nom de base avant de continuer
+        change_base_name = input(f"Souhaitez-vous modifier le nom de base '{base_name}' ? (o/n) [n] : ").lower()
+
+        # Par défaut, le nom de base reste inchangé
+        base_name_modified = base_name
+
+        if change_base_name in ['o', 'oui']:
+            # Demander le nouveau nom de base
+            base_name_modified_input = input(f"Entrez le nouveau nom de base pour '{base_name}' : ").strip()
+
+            # Appliquer le nouveau nom de base immédiatement à tous les fichiers
+            if base_name_modified_input:
+                print(f"Le nom de base '{base_name}' a été modifié en '{base_name_modified_input}'.")
+                base_name_modified = base_name_modified_input  # Mise à jour du nom de base
+
+                # Renommer les fichiers temporairement avec le nouveau nom de base
+                for i, file in enumerate(files):
+                    old_file_path = file
+                    extension = os.path.splitext(file)[1]
+                    new_file_path = os.path.join(file_dir, f"{base_name_modified}{extension}")
+                    
+                    # Renommer immédiatement chaque fichier
+                    os.rename(old_file_path, new_file_path)
+                    files[i] = new_file_path  # Mettre à jour la liste des fichiers avec le nouveau nom de base
+            else:
+                print(f"Nom de base inchangé, utilisation de '{base_name}'.")
+
         # Ignorer les fichiers déjà renommés
-        if is_file_already_renamed(base_name):
-            print(f"Le fichier '{base_name}' est déjà renommé selon la convention.")
+        if is_file_already_renamed(base_name_modified):
+            print(f"Le fichier '{base_name_modified}' est déjà renommé selon la convention.")
             continue
 
         # Obtenir les métadonnées du fichier via metadata_handler
-        metadata = get_metadata_for_file(base_name, files)
+        metadata = get_metadata_for_file(base_name_modified, files)  # Utiliser le nom de base modifié ou non
 
         # Si l'utilisateur choisit de ne pas renommer ou une erreur survient
         if metadata is None:
@@ -59,14 +86,16 @@ def process_files_in_directory(folder):
         # Trouver le fichier .shp pour obtenir le suffixe
         shp_file = next((f for f in files if f.endswith('.shp')), None)
 
-        # Si un fichier .shp est trouvé, identifier le suffixe
+        # Si aucun fichier .shp n'est trouvé, passer au groupe suivant
         if shp_file:
             suffix = identify_suffix(shp_file)
         else:
-            suffix = 'unknown'  # Si aucun .shp n'est trouvé, utiliser 'unknown'
+            print(f"Attention : Aucun fichier .shp trouvé pour '{base_name_modified}'. Utilisation du suffixe 'unknown'.")
+            suffix = 'unknown'
 
-        # Renommer chaque fichier du groupe avec le même suffixe
+        # Renommer chaque groupe de fichiers selon la convention de nommage avec le suffixe détecté ou 'unknown'
         rename_file_group(files, metadata['prefix'], metadata['source'], metadata['year'], metadata['scale'], suffix)
+
 
 def rename_file_group(files, prefix, source, year, scale, suffix):
     """
@@ -75,7 +104,6 @@ def rename_file_group(files, prefix, source, year, scale, suffix):
     for file in files:
         # Ne renommer que si le fichier n'est pas déjà renommé
         if not is_file_already_renamed(file):
-            # Appliquer le suffixe trouvé pour tout le groupe
             new_name = apply_naming_convention(file, prefix, suffix, source, year, scale)
 
             # Vérifier que new_name est bien une chaîne de caractères
@@ -85,4 +113,5 @@ def rename_file_group(files, prefix, source, year, scale, suffix):
                 os.rename(file, os.path.join(os.path.dirname(file), new_name))
             else:
                 print(f"Erreur : Le nouveau nom pour le fichier '{file}' n'est pas valide : {new_name}")
-
+        else:
+            print(f"Le fichier '{file}' est déjà renommé selon la convention.")
