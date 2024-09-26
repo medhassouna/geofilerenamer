@@ -1,0 +1,77 @@
+{
+    "adm": [
+        "administratif",
+        "lieux_nommes",
+        "admin"
+    ],
+    "cad": [
+        "cadastre"
+    ],
+    "veg": [
+        "vegetation",
+        "foret"
+    ],
+    "geo": [
+        "geologie",
+        "bdlisa"
+    ],
+    "bio": [
+        "biodiv",
+        "carhab",
+        "flore",
+        "eee",
+        "eee_flore"
+    ],
+    "eco": [
+        "ecologie",
+        "corridor",
+        "ramsar",
+        "reserve",
+        "znieff",
+        "trame",
+        "axe_intervallee"
+    ],
+    "pat": [
+        "monument",
+        "patrimoine"
+    ],
+    "res": [
+        "reseau",
+        "ligne_electrique",
+        "poste_de_transformation",
+        "canalisation"
+    ],
+    "topo": [
+        "topographie",
+        "relief"
+    ],
+    "bati": [
+        "bati",
+        "services",
+        "erp",
+        "toponymie_services_et_activites",
+        "zone_d_activite_ou_d_interet"
+    ],
+    "risq": [
+        "risques",
+        "Mouvements_de_terrain"
+    ],
+    "zone": [
+        "reglementee",
+        "zonage",
+        "toponymie_zones_reglementees"
+    ],
+    "trans": [
+        "transport",
+        "adresses"
+    ],
+    "hydro": [
+        "hydrographie",
+        "bassin versant",
+        "mare"
+    ],
+    "usage": [
+        "occupation",
+        "ocs"
+    ]
+}
