@@ -57,13 +57,23 @@ def process_segments(segments):
     # Retourner le nom final en camelCase
     return ''.join(camel_case_segments)
 
+import re
+
 def is_file_already_renamed(filename):
     """
     Vérifie si un fichier a déjà été renommé selon la convention :
-    [prefixe]_[nomFichierCamelCase]_[source]_[année].
+    [prefix]_[suffix]_[nomFichierCamelCase]_[source]_[année]_[échelle] (optional échelle).
     Le fichier est considéré comme déjà renommé si un pattern correspondant est détecté.
     """
-    pattern_with_suffix = r"^[a-z]+(_[a-z]+)?_[a-zA-Z0-9]+_[a-zA-Z0-9]+_\d{4}.*"
+    # Regex pattern for the naming convention:
+    # - [prefix] = lowercase letters
+    # - [suffix] = lowercase letters (optional)
+    # - [nomFichierCamelCase] = mix of letters and numbers in CamelCase
+    # - [source] = mix of letters and numbers
+    # - [année] = exactly 4 digits
+    # - [échelle] = optional, digits followed by "K" or "M"
+    pattern_with_suffix = r"^[a-z]+(_[a-z]+)?_[a-zA-Z0-9]+_[a-zA-Z0-9]+_\d{4}(_\d+[KM])?.*"
+
     return bool(re.match(pattern_with_suffix, filename))
 
 def log_info(message):

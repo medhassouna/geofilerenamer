@@ -3,119 +3,154 @@ from metadata import keywords, save_keywords_to_file, add_keyword_to_prefix
 from utils import compare_words_insensitive
 
 # Variables globales pour stocker les dernières entrées utilisateur (source, année, échelle)
+# Ces variables permettent de réutiliser les dernières valeurs saisies par l'utilisateur
 last_source = None
 last_year = None
 last_scale = None
 
 def detect_prefix(folder, base_name):
     """
-    Détecte automatiquement le préfixe en fonction des mots-clés dans le nom du dossier ou du fichier.
-    Parcourt le dictionnaire des keywords et compare les mots du nom du dossier et du fichier avec les mots-clés.
+    Détecte automatiquement le préfixe basé sur le nom du dossier ou du fichier.
+    Parcourt le dictionnaire `keywords` pour identifier un préfixe associé aux mots-clés
+    trouvés dans le nom du dossier parent ou du fichier.
+    
+    Args:
+        folder (str): Le chemin du dossier contenant le fichier.
+        base_name (str): Le nom de base du fichier (sans extension).
+        
+    Returns:
+        str: Le préfixe détecté ou None s'il n'est pas trouvé.
     """
-    parent_folder = os.path.basename(os.path.normpath(folder))  # Récupère le nom du dossier parent
+    # Extraire le nom du dossier parent
+    parent_folder = os.path.basename(os.path.normpath(folder))
 
+    # Parcourir chaque préfixe et sa liste de mots-clés pour faire une correspondance
     for prefix, keyword_list in keywords.items():
         for keyword in keyword_list:
+            # Comparer de manière insensible à la casse avec le dossier parent ou le nom du fichier
             if compare_words_insensitive(parent_folder, keyword) or compare_words_insensitive(base_name, keyword):
                 return prefix
     return None
 
 def get_metadata_for_file(base_name, files):
     """
-    Récupère les métadonnées pour un fichier et demande à l'utilisateur s'il souhaite renommer.
-    Si nécessaire, propose les dernières entrées utilisateur comme valeurs par défaut.
+    Collecte les métadonnées nécessaires (préfixe, source, année, échelle) pour un fichier.
+    Demande à l'utilisateur de valider ou d'ignorer certaines informations si elles sont déjà fournies.
+    
+    Args:
+        base_name (str): Nom de base du fichier (sans extension).
+        files (list): Liste des fichiers associés (shapefiles ou autres formats).
+
+    Returns:
+        dict: Un dictionnaire contenant les métadonnées (`prefix`, `source`, `year`, `scale`).
     """
-    global last_source, last_year, last_scale
-    folder = os.path.dirname(files[0])  # Récupère le dossier du fichier
-    
-    # Trouver si un fichier .shp existe dans le groupe
-    shp_file = next((f for f in files if f.endswith('.shp')), None)
+    global last_source, last_year, last_scale  # Réutilisation des dernières valeurs
+    folder = os.path.dirname(files[0])  # Récupérer le dossier du premier fichier
 
-    # Si un fichier .shp existe, utiliser son nom de base (sans extension) pour la question
-    if shp_file:
-        base_name_to_display = os.path.splitext(os.path.basename(shp_file))[0]
-    else:
-        # Si ce n'est pas un shapefile, utiliser le nom complet du fichier
-        base_name_to_display = os.path.basename(files[0])
+    # Utiliser .shp si c'est un groupe de shapefiles, sinon utiliser le premier fichier
+    shp_file = next((f for f in files if f.endswith('.shp')), files[0])
+    base_name_to_display = os.path.basename(shp_file)  # Afficher le nom avec extension .shp ou autre
 
-    # Demander si l'utilisateur veut renommer le fichier, avec 'o' comme réponse par défaut
+    # Demander si l'utilisateur veut renommer le fichier
     rename_choice = input(f"Souhaitez-vous renommer le fichier {base_name_to_display}? (o/n) [o] : ").lower()
-    
+
+    # Si l'utilisateur ne souhaite pas renommer, retourner None
     if rename_choice not in ['o', '']:
         print(f"Le fichier '{base_name_to_display}' ne sera pas renommé.")
         return None
 
-    # Détecter le préfixe ou demander à l'utilisateur
+    # Détecter le préfixe ou demander à l'utilisateur de le saisir
     prefix = detect_prefix(folder, base_name) or ask_for_prefix(base_name, files[0])
 
-    # Demander la source avec la possibilité d'ignorer
-    source = input(f"Veuillez entrer la source (ex: bdtopo) ou appuyez sur Entrée pour réutiliser '{last_source}' ou tapez 'n' pour ignorer : ").strip()
-    if source.lower() == 'n':  # Si l'utilisateur tape 'n', on garde la source vide ou inconnue
-        source = "inconnue"
-    elif not source:
-        source = last_source  # Réutilise la dernière source uniquement si l'utilisateur appuie sur Entrée
-    last_source = source  # Mémoriser la dernière source entrée
+    # Collecter les autres métadonnées : source, année, échelle avec possibilité de réutiliser ou d'ignorer
+    source = get_user_input_with_default("source", last_source)
+    last_source = source  # Mémoriser la dernière valeur saisie
 
-    # Demander l'année avec la possibilité d'ignorer
-    year = input(f"Veuillez entrer l'année des données (format: YYYY) ou appuyez sur Entrée pour réutiliser '{last_year}' ou tapez 'n' pour ignorer : ").strip()
-    if year.lower() == 'n':  # Si l'utilisateur tape 'n', on garde l'année vide ou inconnue
-        year = "inconnue"
-    elif not year:
-        year = last_year  # Réutilise la dernière année si l'utilisateur appuie sur Entrée
-    last_year = year
+    year = get_user_input_with_default("année des données (format: YYYY)", last_year)
+    last_year = year  # Mémoriser la dernière année saisie
 
-    # Demander l'échelle avec la possibilité d'ignorer
-    scale = input(f"Veuillez entrer l'échelle des données (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{last_scale}' ou tapez 'n' pour ignorer : ").strip()
-    if scale.lower() == 'n':  # Si l'utilisateur tape 'n', on garde l'échelle vide ou inconnue
-        scale = "inconnue"
-    elif not scale:
-        scale = last_scale  # Réutilise la dernière échelle si l'utilisateur appuie sur Entrée
-    last_scale = scale
+    scale = get_user_input_with_default("échelle des données (ex: 10K, 25K)", last_scale)
+    last_scale = scale  # Mémoriser la dernière échelle saisie
 
+    # Retourner les métadonnées collectées
     return {
         'prefix': prefix,
         'source': source,
         'year': year,
         'scale': scale
     }
+    
+def get_user_input_with_default(label, default_value):
+    """
+    Demande à l'utilisateur une entrée avec une valeur par défaut. Si l'utilisateur ne fournit pas
+    de nouvelle valeur, la valeur par défaut est utilisée. L'utilisateur peut également taper 'n'
+    pour ignorer cette donnée.
+
+    Args:
+        label (str): Le texte à afficher pour demander l'entrée de l'utilisateur.
+        default_value (str): La valeur par défaut à réutiliser si l'utilisateur ne fournit pas d'entrée.
+        
+    Returns:
+        str: La valeur saisie par l'utilisateur ou la valeur par défaut.
+    """
+    # Formuler la question avec la valeur par défaut et la possibilité d'ignorer ('n')
+    user_input = input(f"Veuillez entrer {label} ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+    
+    if user_input.lower() == 'i':
+        return "inconnue"  # Si 'n' est saisi, renvoyer 'inconnue'
+    
+    # Si aucune saisie n'est faite, réutiliser la valeur par défaut
+    return user_input if user_input else default_value
 
 def validate_or_change_prefix(detected_prefix, base_name):
     """
-    Permet à l'utilisateur de valider ou de changer le préfixe détecté pour un fichier.
-    'o' est considéré comme la réponse par défaut.
+    Valide ou change le préfixe détecté pour un fichier. Si l'utilisateur souhaite changer le préfixe,
+    il est invité à entrer un nouveau préfixe.
+
+    Args:
+        detected_prefix (str): Le préfixe détecté automatiquement.
+        base_name (str): Nom de base du fichier pour référence.
+
+    Returns:
+        str: Le préfixe validé ou modifié.
     """
+    # Demander à l'utilisateur de valider ou changer le préfixe détecté
     print(f"Le préfixe détecté pour {base_name} est : {detected_prefix}.")
     choice = input("Voulez-vous valider ce préfixe ? (o/n) [o] : ").lower()
-    
-    if choice in ['', 'o']:  # Interprète une réponse vide comme 'o'
+
+    # Si l'utilisateur ne fait rien ou tape 'o', le préfixe est validé
+    if choice in ['', 'o']:
         return detected_prefix
     else:
+        # Sinon, demander un nouveau préfixe
         return ask_for_prefix(base_name)
 
 def ask_for_prefix(base_name, full_file_path):
     """
-    Demande à l'utilisateur de saisir un préfixe s'il n'a pas été détecté automatiquement.
-    Affiche le chemin du dossier parent du fichier (sans inclure le nom du fichier).
-    """
-    # # Debugging: Affiche les préfixes avant de les afficher à l'utilisateur
-    # print("DEBUG: Préfixes disponibles avant affichage :")
-    # print(keywords)
+    Demande à l'utilisateur de saisir un préfixe si le préfixe n'a pas été détecté automatiquement.
 
-    # Les préfixes du dictionnaire keywords
+    Args:
+        base_name (str): Nom de base du fichier pour lequel un préfixe est demandé.
+        full_file_path (str): Chemin complet du fichier pour affichage contextuel.
+
+    Returns:
+        str: Le préfixe validé ou saisi par l'utilisateur.
+    """
     print(f"Préfixes disponibles : {list(keywords.keys())}")
     
+    # Afficher le chemin complet du dossier parent
     folder_path = os.path.dirname(full_file_path)
     print(f"Chemin complet du dossier : {folder_path}")
 
-    # Demande à l'utilisateur d'entrer un préfixe
+    # Demander à l'utilisateur de saisir un préfixe valide
     prefix_input = input(f"Aucun préfixe détecté pour {base_name}. Veuillez entrer un préfixe parmi ceux listés : ")
 
-    # Vérifie que le préfixe existe dans le dictionnaire
+    # Boucle jusqu'à ce qu'un préfixe valide soit saisi
     while prefix_input not in keywords:
         print("Préfixe invalide. Veuillez choisir un préfixe parmi ceux listés.")
         prefix_input = input(f"Veuillez entrer un préfixe valide pour {base_name} : ")
 
-    # Propose d'ajouter le mot-clé s'il n'est pas déjà dans le dictionnaire
+    # Proposer d'ajouter le mot-clé au dictionnaire s'il n'est pas déjà présent
     if base_name.lower() not in keywords[prefix_input]:
         add_keyword_to_prefix(base_name, prefix_input)
 

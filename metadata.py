@@ -3,9 +3,9 @@ import os
 
 # Dictionnaire des mots-clés par défaut
 keywords = {
-    'adm': ['administratif', 'lieux_nommes', 'admin'],
+    'adm': ['administratif'],
     'cad': ['cadastre'],
-    'zone': ['reglementee', 'zonage']
+    'zone': ['zonage']
 }
 
 def load_keywords_from_file(file_path="metadata.json"):
