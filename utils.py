@@ -78,22 +78,33 @@ def load_prefixes_from_json(file_path='metadata.json'):
 def is_file_already_renamed(filename, prefixes):
     """
     Vérifie si un fichier a déjà été renommé selon la convention :
-    [prefix]_[suffix]_[nomFichierCamelCase]_[source]_[année]_[échelle].
+    [prefix]_[suffix]_[nomCamelCase]_[source]_[année]_[échelle] (source, année, et échelle sont optionnelles).
     
     Args:
-        filename (str): Le nom du fichier à vérifier.
+        filename (str): Le nom du fichier à vérifier, sans extension.
         prefixes (list): Liste des préfixes dynamiques à vérifier.
         
     Returns:
         bool: True si le fichier est déjà renommé, sinon False.
     """
-    # Créer un pattern pour les préfixes (les préfixes sont des chaînes de lettres minuscules)
-    prefix_pattern = f"^({'|'.join(prefixes)})"  # Exemple: (adm|cad|veg|geo|bio|...)
-    # Regex pattern de la convention de nommage
-    pattern_with_suffix = rf"{prefix_pattern}(_[a-z]+)?_[a-zA-Z0-9]+_[a-zA-Z0-9]+_\d{{4}}(_\d+[KM])?.*"
+    # Retirer l'extension pour ne vérifier que le nom de base
+    base_name = os.path.splitext(filename)[0]
     
-    # Appliquer le regex pour vérifier si le fichier correspond à la convention
-    return bool(re.match(pattern_with_suffix, filename))
+    # Afficher le nom de fichier à tester pour débogage
+    print(f"Vérification du nom de fichier sans extension: {base_name}")
+
+    # Construire une regex dynamique en fonction des préfixes chargés depuis le fichier JSON
+    prefix_pattern = f"^({'|'.join(prefixes)})"  # Exemple: (adm|cad|veg|geo|bio|...)
+
+    # Modèle regex plus flexible :
+    # - Préfixe obligatoire suivi d'une partie facultative pour suffixe, source, année, échelle
+    pattern_with_suffix = rf"{prefix_pattern}(_[a-z]+)?_[a-zA-Z0-9]+(_[a-zA-Z0-9]+)?(_\d{{4}})?(_\d+[KM])?"
+
+    # Vérifier si le nom de base correspond au pattern
+    result = bool(re.match(pattern_with_suffix, base_name))
+    print(f"Le fichier '{base_name}' correspond-il à la convention ? {result}")
+    
+    return result
 
 def log_info(message):
     """
