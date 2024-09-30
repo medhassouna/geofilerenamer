@@ -1,4 +1,5 @@
 import os
+import re
 from metadata import keywords, save_keywords_to_file, add_keyword_to_prefix
 from utils import compare_words_insensitive
 
@@ -49,7 +50,7 @@ def get_metadata_for_file(base_name, files):
 
     # Utiliser .shp si c'est un groupe de shapefiles, sinon utiliser le premier fichier
     shp_file = next((f for f in files if f.endswith('.shp')), files[0])
-    base_name_to_display = os.path.basename(shp_file)  # Afficher le nom avec extension .shp ou autre
+    base_name_to_display = os.path.basename(shp_file)  # Afficher le nom avec extension .shp
 
     # Demander si l'utilisateur veut renommer le fichier
     rename_choice = input(f"Souhaitez-vous renommer le fichier {base_name_to_display}? (o/n) [o] : ").lower()
@@ -108,7 +109,7 @@ def get_user_input_with_default(label, default_value):
 def validate_or_change_prefix(detected_prefix, base_name):
     """
     Permet à l'utilisateur de valider ou de modifier le préfixe détecté.
-    Si l'utilisateur souhaite modifier le préfixe, il peut en entrer un nouveau.
+    Si aucun préfixe n'est détecté, il est directement demandé à l'utilisateur d'en entrer un nouveau.
     
     Args:
         detected_prefix (str): Le préfixe détecté automatiquement.
@@ -117,14 +118,19 @@ def validate_or_change_prefix(detected_prefix, base_name):
     Returns:
         str: Le préfixe validé ou modifié.
     """
-    # Afficher le préfixe détecté et demander à l'utilisateur de le valider ou de le modifier
+    # Si aucun préfixe n'est détecté, demander un préfixe à l'utilisateur directement
+    if detected_prefix is None:
+        print(f"Aucun préfixe détecté pour le fichier '{base_name}'.")
+        return ask_for_prefix(base_name, base_name)
+
+    # Si un préfixe est détecté, demander à l'utilisateur de valider ou de le modifier
     print(f"Le préfixe détecté pour le fichier '{base_name}' est : '{detected_prefix}'.")
     choice = input(f"Voulez-vous valider ce préfixe ? (o/n) [o] : ").lower()
 
     # Si l'utilisateur valide (par défaut 'o'), retourner le préfixe détecté
     if choice in ['o', '']:
         return detected_prefix
-    
+
     # Sinon, demander un nouveau préfixe à l'utilisateur
     return ask_for_prefix(base_name, base_name)
 
@@ -171,28 +177,28 @@ def validate_scale(scale):
     """
     return bool(re.match(r'^\d{1,4}K$', scale, re.IGNORECASE))
 
-def get_valid_year():
+def get_valid_year(default_value):
     """
     Demande à l'utilisateur de fournir une année au format YYYY.
     Si aucune entrée n'est faite, l'utilisateur doit entrer une année valide.
     """
     while True:
-        year = input("Veuillez entrer l'année des données (format: YYYY) : ").strip()
-        if not year:  # Si l'utilisateur appuie sur Entrée, pas de valeur par défaut
-            return None
+        year = input(f"Veuillez entrer l'année des données (format: YYYY) ou appuyez sur Entrée pour réutiliser '{default_value}' : ").strip()
+        if not year:
+            return default_value
         if validate_year(year):
             return year
         print("Format d'année invalide. Veuillez entrer une année au format YYYY (ex: 2023).")
 
-def get_valid_scale():
+def get_valid_scale(default_value):
     """
     Demande à l'utilisateur de fournir une échelle au format valide (ex: 10K, 200K).
     Si aucune entrée n'est faite, l'utilisateur doit entrer une échelle valide.
     """
     while True:
-        scale = input("Veuillez entrer l'échelle des données (ex: 10K, 25K) : ").strip()
-        if not scale:  # Si l'utilisateur appuie sur Entrée, pas de valeur par défaut
-            return None
+        scale = input(f"Veuillez entrer l'échelle des données (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{default_value}' : ").strip()
+        if not scale:
+            return default_value
         if validate_scale(scale):
-            return scale.upper()  # Normaliser la sortie pour être en majuscules
+            return scale.upper()
         print("Format d'échelle invalide. Veuillez entrer une échelle au format valide (ex: 10K, 200K, 1K).")

@@ -1,7 +1,7 @@
-# utils.py
-
 import unicodedata
+import os
 import re
+import json
 from datetime import datetime
 
 # Liste des mots de liaison à supprimer des noms
@@ -11,69 +11,88 @@ def remove_accents_and_special_chars(name):
     """
     Nettoie une chaîne en supprimant les accents et les caractères spéciaux, 
     puis en remplaçant tout caractère non alphanumérique par un underscore (_).
+    
     Parameters:
         name (str): Le nom de fichier à nettoyer.
+        
     Returns:
         str: La chaîne nettoyée sans accents ni caractères spéciaux.
     """
-    # Normalisation Unicode pour retirer les accents
     nfkd_form = unicodedata.normalize('NFKD', name)
     without_accents = ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
-    # Remplacer les caractères non alphanumériques par des underscores
-    return re.sub(r'[^a-zA-Z0-9]', '_', without_accents)
+    return re.sub(r'[^a-zA-Z0-9]', '_', without_accents)  # Remplacer les caractères non alphanumériques par _
 
 def split_into_segments(name):
     """
     Sépare le nom d'un fichier en segments basés sur les majuscules, les chiffres, les tirets et les underscores.
+    
     Parameters:
         name (str): Le nom de fichier à segmenter.
+        
     Returns:
         list: Une liste de segments découpés du nom.
     """
-    # Supprimer les accents et normaliser les caractères spéciaux
     normalized_name = remove_accents_and_special_chars(name)
-    # Expression régulière pour découper le nom en segments
-    segments = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z])|[A-Z]+|[0-9]+|[-_]', normalized_name)
-    return segments
+    return re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z])|[A-Z]+|[0-9]+|[-_]', normalized_name)
 
 def process_segments(segments):
     """
     Applique le format camelCase à une liste de segments en ignorant les mots de liaison, tirets et underscores.
+    
     Parameters:
         segments (list): La liste des segments à traiter.
+        
     Returns:
         str: Le nom formaté en camelCase.
     """
-    # Filtrer les segments en ignorant les tirets, underscores et mots de liaison
     filtered_segments = [
         segment for segment in segments if segment not in ['-', '_'] and segment.lower() not in JOIN_WORDS
     ]
-    # Si aucun segment pertinent n'est trouvé, retourner une chaîne vide
     if not filtered_segments:
         return ""
-    # Le premier segment est en minuscule, les suivants avec majuscule initiale (camelCase)
     first_word = filtered_segments[0].lower()
     camel_case_segments = [first_word] + [word.capitalize() for word in filtered_segments[1:]]
-    # Retourner le nom final en camelCase
     return ''.join(camel_case_segments)
 
-import re
+def load_prefixes_from_json(file_path='metadata.json'):
+    """
+    Charge les préfixes depuis le fichier metadata.json.
+    
+    Args:
+        file_path (str): Le chemin vers le fichier JSON contenant les préfixes.
+        
+    Returns:
+        list: Une liste des préfixes disponibles.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return list(data.keys())  # Retourne uniquement les clés (les préfixes)
+    except FileNotFoundError:
+        print(f"Erreur : Le fichier {file_path} n'a pas été trouvé.")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"Erreur de décodage JSON dans {file_path} : {e}")
+        return []
 
-def is_file_already_renamed(filename):
+def is_file_already_renamed(filename, prefixes):
     """
     Vérifie si un fichier a déjà été renommé selon la convention :
-    [prefix]_[suffix]_[nomFichierCamelCase]_[source]_[année]_[échelle] (optional échelle).
-    Le fichier est considéré comme déjà renommé si un pattern correspondant est détecté.
+    [prefix]_[suffix]_[nomFichierCamelCase]_[source]_[année]_[échelle].
+    
+    Args:
+        filename (str): Le nom du fichier à vérifier.
+        prefixes (list): Liste des préfixes dynamiques à vérifier.
+        
+    Returns:
+        bool: True si le fichier est déjà renommé, sinon False.
     """
-    # Regex pattern for the naming convention:
-    # - [prefix] = lowercase letters
-    # - [suffix] = lowercase letters (optional)
-    # - [nomFichierCamelCase] = mix of letters and numbers in CamelCase
-    # - [source] = mix of letters and numbers
-    # - [année] = exactly 4 digits
-    # - [échelle] = optional, digits followed by "K" or "M"
-    pattern_with_suffix = r"^[a-z]+(_[a-z]+)?_[a-zA-Z0-9]+_[a-zA-Z0-9]+_\d{4}(_\d+[KM])?.*"
-
+    # Créer un pattern pour les préfixes (les préfixes sont des chaînes de lettres minuscules)
+    prefix_pattern = f"^({'|'.join(prefixes)})"  # Exemple: (adm|cad|veg|geo|bio|...)
+    # Regex pattern de la convention de nommage
+    pattern_with_suffix = rf"{prefix_pattern}(_[a-z]+)?_[a-zA-Z0-9]+_[a-zA-Z0-9]+_\d{{4}}(_\d+[KM])?.*"
+    
+    # Appliquer le regex pour vérifier si le fichier correspond à la convention
     return bool(re.match(pattern_with_suffix, filename))
 
 def log_info(message):
@@ -91,6 +110,13 @@ def compare_words_insensitive(name, keyword):
     """
     Compare deux chaînes insensiblement à la casse, mot par mot, en ignorant les mots de liaison.
     Utilise les mots exclus de la liste JOIN_WORDS.
+    
+    Args:
+        name (str): Nom à comparer.
+        keyword (str): Mot-clé à comparer avec le nom.
+        
+    Returns:
+        bool: True si tous les mots du mot-clé sont présents dans le nom, sinon False.
     """
     name_parts = [word.lower() for word in name.split() if word.lower() not in JOIN_WORDS]
     keyword_parts = [word.lower() for word in keyword.split()]
