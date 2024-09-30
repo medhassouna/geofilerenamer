@@ -35,7 +35,7 @@ def detect_prefix(folder, base_name):
 def get_metadata_for_file(base_name, files):
     """
     Collecte les métadonnées nécessaires (préfixe, source, année, échelle) pour un fichier.
-    Demande à l'utilisateur de valider ou d'ignorer certaines informations si elles sont déjà fournies.
+    Demande à l'utilisateur de valider ou de modifier certaines informations si elles sont déjà fournies.
     
     Args:
         base_name (str): Nom de base du fichier (sans extension).
@@ -59,8 +59,11 @@ def get_metadata_for_file(base_name, files):
         print(f"Le fichier '{base_name_to_display}' ne sera pas renommé.")
         return None
 
-    # Détecter le préfixe ou demander à l'utilisateur de le saisir
-    prefix = detect_prefix(folder, base_name) or ask_for_prefix(base_name, files[0])
+    # Détecter le préfixe automatiquement
+    detected_prefix = detect_prefix(folder, base_name)
+    
+    # Proposer à l'utilisateur de valider ou modifier le préfixe détecté
+    prefix = validate_or_change_prefix(detected_prefix, base_name)
 
     # Collecter les autres métadonnées : source, année, échelle avec possibilité de réutiliser ou d'ignorer
     source = get_user_input_with_default("source", last_source)
@@ -104,35 +107,35 @@ def get_user_input_with_default(label, default_value):
 
 def validate_or_change_prefix(detected_prefix, base_name):
     """
-    Valide ou change le préfixe détecté pour un fichier. Si l'utilisateur souhaite changer le préfixe,
-    il est invité à entrer un nouveau préfixe.
-
+    Permet à l'utilisateur de valider ou de modifier le préfixe détecté.
+    Si l'utilisateur souhaite modifier le préfixe, il peut en entrer un nouveau.
+    
     Args:
         detected_prefix (str): Le préfixe détecté automatiquement.
-        base_name (str): Nom de base du fichier pour référence.
-
+        base_name (str): Le nom de base du fichier.
+    
     Returns:
         str: Le préfixe validé ou modifié.
     """
-    # Demander à l'utilisateur de valider ou changer le préfixe détecté
-    print(f"Le préfixe détecté pour {base_name} est : {detected_prefix}.")
-    choice = input("Voulez-vous valider ce préfixe ? (o/n) [o] : ").lower()
+    # Afficher le préfixe détecté et demander à l'utilisateur de le valider ou de le modifier
+    print(f"Le préfixe détecté pour le fichier '{base_name}' est : '{detected_prefix}'.")
+    choice = input(f"Voulez-vous valider ce préfixe ? (o/n) [o] : ").lower()
 
-    # Si l'utilisateur ne fait rien ou tape 'o', le préfixe est validé
-    if choice in ['', 'o']:
+    # Si l'utilisateur valide (par défaut 'o'), retourner le préfixe détecté
+    if choice in ['o', '']:
         return detected_prefix
-    else:
-        # Sinon, demander un nouveau préfixe
-        return ask_for_prefix(base_name)
+    
+    # Sinon, demander un nouveau préfixe à l'utilisateur
+    return ask_for_prefix(base_name, base_name)
 
 def ask_for_prefix(base_name, full_file_path):
     """
-    Demande à l'utilisateur de saisir un préfixe si le préfixe n'a pas été détecté automatiquement.
+    Demande à l'utilisateur de saisir un préfixe valide si celui détecté ne convient pas.
 
     Args:
-        base_name (str): Nom de base du fichier pour lequel un préfixe est demandé.
+        base_name (str): Nom de base du fichier.
         full_file_path (str): Chemin complet du fichier pour affichage contextuel.
-
+    
     Returns:
         str: Le préfixe validé ou saisi par l'utilisateur.
     """
@@ -142,13 +145,13 @@ def ask_for_prefix(base_name, full_file_path):
     folder_path = os.path.dirname(full_file_path)
     print(f"Chemin complet du dossier : {folder_path}")
 
-    # Demander à l'utilisateur de saisir un préfixe valide
-    prefix_input = input(f"Aucun préfixe détecté pour {base_name}. Veuillez entrer un préfixe parmi ceux listés : ")
+    # Demander à l'utilisateur d'entrer un préfixe valide
+    prefix_input = input(f"Veuillez entrer un préfixe pour '{base_name}' parmi ceux listés : ")
 
     # Boucle jusqu'à ce qu'un préfixe valide soit saisi
     while prefix_input not in keywords:
         print("Préfixe invalide. Veuillez choisir un préfixe parmi ceux listés.")
-        prefix_input = input(f"Veuillez entrer un préfixe valide pour {base_name} : ")
+        prefix_input = input(f"Veuillez entrer un préfixe valide pour '{base_name}' : ")
 
     # Proposer d'ajouter le mot-clé au dictionnaire s'il n'est pas déjà présent
     if base_name.lower() not in keywords[prefix_input]:

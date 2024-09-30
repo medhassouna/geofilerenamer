@@ -3,7 +3,7 @@ import fiona
 from utils import remove_accents_and_special_chars, split_into_segments, process_segments
 
 # Liste des extensions généralement associées à un groupe de fichiers shapefile
-SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sld', '.cpg', '.xml', '.shp.xml', '.qml', '.qlr']
+SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.sld', '.cpg', '.xml', '.shp.xml', '.qml', '.qlr', '.qpj', '.cst']
 
 def apply_naming_convention(filename, prefix, suffix, source, year, scale):
     """

@@ -3,10 +3,14 @@
         "administratif",
         "lieux_nommes",
         "admin",
-        "departements"
+        "departements",
+        "communes"
     ],
     "cad": [
-        "cadastre"
+        "cadastre",
+        "parcelles",
+        "prefixes_sections",
+        "sections"
     ],
     "veg": [
         "vegetation",
@@ -21,7 +25,10 @@
         "carhab",
         "flore",
         "eee",
-        "eee_flore"
+        "eee_flore",
+        "zps",
+        "zsc",
+        "zhr"
     ],
     "eco": [
         "ecologie",
