@@ -3,11 +3,14 @@ import re
 from metadata import keywords, save_keywords_to_file, add_keyword_to_prefix
 from utils import compare_words_insensitive
 
-# Variables globales pour stocker les dernières entrées utilisateur (source, année, échelle)
-# Ces variables permettent de réutiliser les dernières valeurs saisies par l'utilisateur
+# Variables globales pour stocker les dernières entrées utilisateur par dossier
 last_source = None
 last_year = None
 last_scale = None
+last_folder = None  # Nouveau : Pour suivre le dernier dossier traité
+
+last_metadata_per_folder = {}  # Nouveau dictionnaire pour suivre les métadonnées par dossier
+
 
 def detect_prefix(folder, base_name):
     """
@@ -33,7 +36,7 @@ def detect_prefix(folder, base_name):
                 return prefix
     return None
 
-def get_metadata_for_file(base_name, files):
+def get_metadata_for_file(base_name, files, last_source=None, last_year=None, last_scale=None):
     """
     Collecte les métadonnées nécessaires (préfixe, source, année, échelle) pour un fichier.
     Demande à l'utilisateur de valider ou de modifier certaines informations si elles sont déjà fournies.
@@ -41,11 +44,13 @@ def get_metadata_for_file(base_name, files):
     Args:
         base_name (str): Nom de base du fichier (sans extension).
         files (list): Liste des fichiers associés (shapefiles ou autres formats).
+        last_source (str, optional): Dernière source utilisée, pour réutilisation.
+        last_year (str, optional): Dernière année utilisée, pour réutilisation.
+        last_scale (str, optional): Dernière échelle utilisée, pour réutilisation.
 
     Returns:
         dict: Un dictionnaire contenant les métadonnées (`prefix`, `source`, `year`, `scale`).
     """
-    global last_source, last_year, last_scale  # Réutilisation des dernières valeurs
     folder = os.path.dirname(files[0])  # Récupérer le dossier du premier fichier
 
     # Utiliser .shp si c'est un groupe de shapefiles, sinon utiliser le premier fichier
@@ -66,15 +71,10 @@ def get_metadata_for_file(base_name, files):
     # Proposer à l'utilisateur de valider ou modifier le préfixe détecté
     prefix = validate_or_change_prefix(detected_prefix, base_name)
 
-    # Collecter les autres métadonnées : source, année, échelle avec possibilité de réutiliser ou d'ignorer
-    source = get_user_input_with_default("source", last_source)
-    last_source = source  # Mémoriser la dernière valeur saisie
-
-    year = get_user_input_with_default("année des données (format: YYYY)", last_year)
-    last_year = year  # Mémoriser la dernière année saisie
-
-    scale = get_user_input_with_default("échelle des données (ex: 10K, 25K)", last_scale)
-    last_scale = scale  # Mémoriser la dernière échelle saisie
+    # Collecter les autres métadonnées : source, année, échelle avec réutilisation des dernières valeurs
+    source = get_user_input_with_default("source", last_source or 'inconnue')
+    year = get_valid_year(last_year or 'inconnue')
+    scale = get_valid_scale(last_scale or 'inconnue')
 
     # Retourner les métadonnées collectées
     return {

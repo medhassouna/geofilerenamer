@@ -13,57 +13,63 @@ SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.sld', 
 # Charger les préfixes dynamiques une fois depuis le fichier metadata.json
 dynamic_prefixes = load_prefixes_from_json()
 
+# Variables globales pour réutiliser les dernières valeurs saisies par l'utilisateur
+last_source = None
+last_year = None
+last_scale = None
+
 def collect_files_by_extension(folder, extensions):
     """
-    Parcourt un dossier et regroupe les fichiers selon leur extension.
-    Cela permet de traiter les fichiers qui partagent le même nom de base mais avec des extensions différentes.
-    Les fichiers .xml qui appartiennent à un groupe shapefile doivent être regroupés avec le reste du groupe.
+    Parcourt un dossier et regroupe les fichiers selon leur extension. Traite chaque dossier indépendamment,
+    regroupant les fichiers qui partagent le même nom de base dans le même dossier.
     """
-    file_groups = {}
+    file_groups_by_folder = {}
 
     for root, dirs, files in os.walk(folder):
         valid_files = [file for file in files if any(file.endswith(ext) for ext in extensions)]
         if not valid_files:
             continue
 
+        # Grouper les fichiers par dossier (root) et nom de base
+        file_groups = {}
         for file in valid_files:
             if file.endswith('.shp.xml'):
                 base_name = file[:-8]  # Retire ".shp.xml" du nom du fichier
             else:
                 base_name, ext = os.path.splitext(file)
 
-            # Associer les fichiers .xml qui appartiennent au groupe shapefile
-            if ext == '.xml' and base_name in file_groups:
-                # Vérifier si ce fichier .xml appartient à un groupe shapefile
-                if any(f.endswith('.shp') for f in file_groups[base_name]):
-                    file_groups[base_name].append(os.path.join(root, file))
-                    continue
-
             if base_name not in file_groups:
                 file_groups[base_name] = []
-            file_groups[base_name].append(os.path.join(root, file))  # Ajouter le chemin complet du fichier
+            file_groups[base_name].append(os.path.join(root, file))
+
+        # Ajouter les groupes de fichiers au dossier correspondant
+        file_groups_by_folder[root] = file_groups
     
-    return file_groups
+    return file_groups_by_folder
 
 def process_files_in_directory(folder):
     """
-    Traite les fichiers dans le dossier spécifié en regroupant les fichiers de même base
-    et en les renommant selon les conventions définies.
+    Traite les fichiers dans chaque dossier spécifié, en regroupant les fichiers de même base
+    et en les renommant selon les conventions définies, dossier par dossier.
     """
-    file_groups = collect_files_by_extension(folder, SUPPORTED_EXTENSIONS)
+    file_groups_by_folder = collect_files_by_extension(folder, SUPPORTED_EXTENSIONS)
 
-    if not file_groups:
+    if not file_groups_by_folder:
         print(f"Aucun fichier valide trouvé dans le dossier {folder}.")
         return
 
-    for base_name, files in file_groups.items():
-        process_file_group(base_name, files)
+    # Traiter chaque dossier indépendamment
+    for folder_path, file_groups in file_groups_by_folder.items():
+        print(f"Traitement des fichiers dans le dossier : {folder_path}")
+        for base_name, files in file_groups.items():
+            process_file_group(base_name, files)
 
 def process_file_group(base_name, files):
     """
-    Traite un groupe de fichiers ayant le même nom de base. Collecte les métadonnées,
+    Traite un groupe de fichiers ayant le même nom de base dans le même dossier. Collecte les métadonnées,
     détecte le suffixe si nécessaire et renomme chaque fichier dans le groupe.
     """
+    global last_source, last_year, last_scale  # Réutiliser les dernières valeurs saisies
     file_dir = os.path.dirname(files[0])
     print(f"Renommage des fichiers dans le dossier : {file_dir}")
 
@@ -76,28 +82,27 @@ def process_file_group(base_name, files):
         print(f"Le fichier '{base_name}' est déjà renommé selon la convention.")
         return
 
-    # Proposer de modifier le nom de base
-    base_name_modified = ask_if_change_base_name(base_name_with_extension, base_name, files, file_dir)
-
-    # Renommer temporairement les fichiers avec le nouveau nom de base
-    rename_files_with_new_base_name(base_name, base_name_modified, files, file_dir)
-
-    # Mise à jour du nom de base modifié après renommage temporaire
-    base_name_modified = os.path.splitext(os.path.basename(files[0]))[0]
-
     # Si un fichier .shp est trouvé, détecter le suffixe correspondant
     if shp_file:
-        renamed_shp_file = next((f for f in files if f.endswith('.shp')), None)
-        suffix = identify_suffix(renamed_shp_file) if renamed_shp_file else 'unknown'
+        # Détecter le suffixe à partir du fichier shp
+        suffix = identify_suffix(shp_file)
+        print(f"Suffixe détecté : {suffix}")
     else:
-        suffix = ''
+        suffix = 'unknown'
+        print("Aucun fichier .shp trouvé, suffixe non détecté.")
 
     # Obtenir les métadonnées après modification du nom
-    metadata = get_metadata_for_file(base_name_modified, files)
+    metadata = get_metadata_for_file(base_name, files, last_source, last_year, last_scale)
 
     if metadata is None:
         return
 
+    # Mémoriser les métadonnées pour les prochaines utilisations
+    last_source = metadata['source']
+    last_year = metadata['year']
+    last_scale = metadata['scale']
+
+    # Renommer le groupe de fichiers en fonction des métadonnées et du suffixe détecté
     rename_file_group(files, metadata['prefix'], metadata['source'], metadata['year'], metadata['scale'], suffix)
 
 def rename_files_with_new_base_name(base_name, base_name_modified, files, file_dir):

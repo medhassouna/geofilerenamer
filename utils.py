@@ -89,20 +89,15 @@ def is_file_already_renamed(filename, prefixes):
     """
     # Retirer l'extension pour ne vérifier que le nom de base
     base_name = os.path.splitext(filename)[0]
-    
-    # Afficher le nom de fichier à tester pour débogage
-    print(f"Vérification du nom de fichier sans extension: {base_name}")
 
     # Construire une regex dynamique en fonction des préfixes chargés depuis le fichier JSON
-    prefix_pattern = f"^({'|'.join(prefixes)})"  # Exemple: (adm|cad|veg|geo|bio|...)
+    prefix_pattern = f"^({'|'.join(prefixes)})"
 
-    # Modèle regex plus flexible :
-    # - Préfixe obligatoire suivi d'une partie facultative pour suffixe, source, année, échelle
-    pattern_with_suffix = rf"{prefix_pattern}(_[a-z]+)?_[a-zA-Z0-9]+(_[a-zA-Z0-9]+)?(_\d{{4}})?(_\d+[KM])?"
+    # Pattern de correspondance stricte avec CamelCase et parties optionnelles
+    pattern_with_suffix = rf"{prefix_pattern}(_[a-z]+)?_[a-zA-Z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)?(_\d{{4}})?(_\d+[KM])?"
 
     # Vérifier si le nom de base correspond au pattern
     result = bool(re.match(pattern_with_suffix, base_name))
-    print(f"Le fichier '{base_name}' correspond-il à la convention ? {result}")
     
     return result
 

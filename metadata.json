@@ -4,7 +4,14 @@
         "lieux_nommes",
         "admin",
         "departements",
-        "communes"
+        "communes",
+        "arrondissement",
+        "collectivite_territoriale",
+        "commune",
+        "commune_associee_ou_deleguee",
+        "departement",
+        "epci",
+        "region"
     ],
     "cad": [
         "cadastre",
