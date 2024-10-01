@@ -66,8 +66,8 @@ def process_files_in_directory(folder):
 
 def process_file_group(base_name, files):
     """
-    Traite un groupe de fichiers ayant le même nom de base dans le même dossier. Collecte les métadonnées,
-    détecte le suffixe si nécessaire et renomme chaque fichier dans le groupe.
+    Traite un groupe de fichiers ayant le même nom de base dans le même dossier. 
+    Collecte les métadonnées, détecte le suffixe si nécessaire et renomme chaque fichier dans le groupe.
     """
     global last_source, last_year, last_scale  # Réutiliser les dernières valeurs saisies
     file_dir = os.path.dirname(files[0])
@@ -75,24 +75,28 @@ def process_file_group(base_name, files):
 
     # Identifier le fichier .shp comme représentant principal du groupe shapefile
     shp_file = next((f for f in files if f.endswith('.shp')), None)
-    base_name_with_extension = os.path.basename(shp_file) if shp_file else os.path.basename(files[0])
+    
+    # Ignorer les groupes sans fichier .shp
+    if not shp_file:
+        print(f"Aucun fichier .shp trouvé pour le groupe '{base_name}', fichiers ignorés.")
+        return
+    
+    base_name_with_extension = os.path.basename(shp_file)
 
-    # Vérifier si le fichier est déjà renommé (avec les préfixes dynamiques)
+    # Vérifier si le fichier est déjà renommé selon les préfixes dynamiques
     if is_file_already_renamed(base_name, dynamic_prefixes):
         print(f"Le fichier '{base_name}' est déjà renommé selon la convention.")
         return
 
-    # Si un fichier .shp est trouvé, détecter le suffixe correspondant
-    if shp_file:
-        # Détecter le suffixe à partir du fichier shp
-        suffix = identify_suffix(shp_file)
-        print(f"Suffixe détecté : {suffix}")
-    else:
-        suffix = 'unknown'
-        print("Aucun fichier .shp trouvé, suffixe non détecté.")
+    # Si un fichier .shp est trouvé, détecter le suffixe
+    suffix = identify_suffix(shp_file)
+    print(f"Suffixe détecté : {suffix}")
+
+    # Proposer la modification du nom de base
+    base_name_modified = ask_if_change_base_name(base_name_with_extension, base_name, files, file_dir)
 
     # Obtenir les métadonnées après modification du nom
-    metadata = get_metadata_for_file(base_name, files, last_source, last_year, last_scale)
+    metadata = get_metadata_for_file(base_name_modified, files, last_source, last_year, last_scale)
 
     if metadata is None:
         return
@@ -142,7 +146,7 @@ def ask_if_change_base_name(base_name_with_extension, base_name, files, file_dir
         base_name_modified_input = input(f"Entrez le nouveau nom de base pour '{base_name_with_extension}' : ").strip()
         if base_name_modified_input:
             print(f"Le nom de base '{base_name}' a été modifié en '{base_name_modified_input}'.")
-            base_name = base_name_modified_input
+            return base_name_modified_input
 
     return base_name
 
