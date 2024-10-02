@@ -35,7 +35,10 @@
         "eee_flore",
         "zps",
         "zsc",
-        "zhr"
+        "zhr",
+        "cbal",
+        "apb",
+        "ens"
     ],
     "eco": [
         "ecologie",
@@ -44,7 +47,8 @@
         "reserve",
         "znieff",
         "trame",
-        "axe_intervallee"
+        "axe_intervallee",
+        "regions_naturelles"
     ],
     "pat": [
         "monument",
@@ -74,7 +78,10 @@
     "zone": [
         "reglementee",
         "zonage",
-        "toponymie_zones_reglementees"
+        "toponymie_zones_reglementees",
+        "foret_publique",
+        "parc_ou_reserve",
+        "emprise"
     ],
     "trans": [
         "transport",
@@ -87,6 +94,7 @@
     ],
     "usage": [
         "occupation",
-        "ocs"
+        "ocs",
+        "haie"
     ]
 }

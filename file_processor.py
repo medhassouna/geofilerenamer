@@ -4,11 +4,11 @@ from naming_convention import apply_naming_convention, identify_suffix
 from utils import log_info, is_file_already_renamed, load_prefixes_from_json
 
 # Liste des extensions prises en charge, y compris shapefiles et autres formats géospatiaux courants
-SUPPORTED_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.gpkg', 
+SUPPORTED_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.CPG', '.shp.xml', '.xml', '.qml', '.qlr', '.gpkg', 
                         '.json', '.geojson', '.csv', '.kmz', '.KMZ', '.kml', '.KML', '.dwg', '.DWG', '.qpj', '.cst', '.sbn', '.sbx']
 
 # Extensions spécifiques aux fichiers composant un groupe de shapefiles
-SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.qpj', '.cst']
+SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.CPG', '.shp.xml', '.xml', '.qml', '.qlr', '.qpj', '.cst']
 
 # Charger les préfixes dynamiques une fois depuis le fichier metadata.json
 dynamic_prefixes = load_prefixes_from_json()
@@ -75,12 +75,12 @@ def process_file_group(base_name, files):
 
     # Identifier le fichier .shp comme représentant principal du groupe shapefile
     shp_file = next((f for f in files if f.endswith('.shp')), None)
-    
+
     # Ignorer les groupes sans fichier .shp
     if not shp_file:
         print(f"Aucun fichier .shp trouvé pour le groupe '{base_name}', fichiers ignorés.")
         return
-    
+
     base_name_with_extension = os.path.basename(shp_file)
 
     # Vérifier si le fichier est déjà renommé selon les préfixes dynamiques
@@ -94,6 +94,9 @@ def process_file_group(base_name, files):
 
     # Proposer la modification du nom de base
     base_name_modified = ask_if_change_base_name(base_name_with_extension, base_name, files, file_dir)
+
+    # Appliquer le changement de nom de base avant d'obtenir les métadonnées
+    rename_files_with_new_base_name(base_name, base_name_modified, files, file_dir)
 
     # Obtenir les métadonnées après modification du nom
     metadata = get_metadata_for_file(base_name_modified, files, last_source, last_year, last_scale)
@@ -126,15 +129,16 @@ def rename_files_with_new_base_name(base_name, base_name_modified, files, file_d
 
             # Vérifier si le fichier cible existe déjà et l'ignorer si c'est le cas
             if os.path.exists(new_file_path):
-                print(f"Le fichier '{new_file_path}' existe déjà. Ignoré.")
+                print(f"Le fichier '{os.path.basename(new_file_path)}' existe déjà. Ignoré.")
                 continue  # Ne pas essayer de renommer si le fichier existe déjà
 
             try:
                 os.rename(file, new_file_path)
                 files[i] = new_file_path  # Mettre à jour la liste avec le nouveau chemin
-                print(f"Renommage de '{file}' en '{new_file_path}'")
+                # Afficher seulement le nom de base, sans le chemin complet
+                print(f"Renommage temporaire de '{os.path.basename(file)}' en '{os.path.basename(new_file_path)}'")
             except OSError as e:
-                print(f"Erreur lors du renommage de '{file}' : {e}")
+                print(f"Erreur lors du renommage de '{os.path.basename(file)}' : {e}")
 
 def ask_if_change_base_name(base_name_with_extension, base_name, files, file_dir):
     """
@@ -163,7 +167,7 @@ def rename_file_group(files, prefix, source, year, scale, suffix):
                 
                 # Afficher uniquement le fichier .shp lors du renommage
                 if file.endswith('.shp'):
-                    log_info(f"Renommage de {file} en {new_name}")
-                    print(f"Renommage de '{file}' en '{new_name}'")
+                    log_info(f"Renommage de {os.path.basename(file)} en {new_name}")
+                    print(f"Renommage de '{os.path.basename(file)}' en '{new_name}'")
             else:
-                print(f"Erreur : Le nouveau nom pour le fichier '{file}' n'est pas valide : {new_name}")
+                print(f"Erreur : Le nouveau nom pour le fichier '{os.path.basename(file)}' n'est pas valide : {new_name}")

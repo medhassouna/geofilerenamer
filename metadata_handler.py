@@ -98,7 +98,7 @@ def get_user_input_with_default(label, default_value):
         str: La valeur saisie par l'utilisateur ou la valeur par défaut.
     """
     # Formuler la question avec la valeur par défaut et la possibilité d'ignorer ('n')
-    user_input = input(f"Veuillez entrer {label} ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+    user_input = input(f"Source ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
     
     if user_input.lower() == 'i':
         return "inconnue"  # Si 'n' est saisi, renvoyer 'inconnue'
@@ -183,7 +183,7 @@ def get_valid_year(default_value):
     Si aucune entrée n'est faite, l'utilisateur doit entrer une année valide.
     """
     while True:
-        year = input(f"Veuillez entrer l'année des données (format: YYYY) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+        year = input(f"Année (format: YYYY) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
         if year.lower() == 'i':  # Ignorer et renvoyer "inconnue"
             return "inconnue"
         if not year:
@@ -199,7 +199,7 @@ def get_valid_scale(default_value):
     Si aucune entrée n'est faite, l'utilisateur doit entrer une échelle valide.
     """
     while True:
-        scale = input(f"Veuillez entrer l'échelle des données (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+        scale = input(f"Echelle (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
         if scale.lower() == 'i':  # Ignorer et renvoyer "inconnue"
             return "inconnue"
         if not scale:
