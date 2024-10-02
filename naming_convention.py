@@ -51,7 +51,7 @@ import fiona
 def identify_suffix(shapefile):
     """
     Identifie le suffixe en fonction du type de géométrie contenu dans le fichier (Point, LineString, Polygon, etc.).
-    Utilise Fiona pour lire les métadonnées du shapefile.
+    Utilise Fiona pour lire les métadonnées du shapefile, y compris pour les géométries 3D (ex: PointZ, LineStringZ, PolygonZ).
     """
     if shapefile.endswith('.shp'):
         try:
@@ -66,12 +66,12 @@ def identify_suffix(shapefile):
                 geom_type = src.schema['geometry']
                 print(f"Type de géométrie détecté dans {shapefile}: {geom_type}")
                 
-                # Déterminer le suffixe en fonction du type de géométrie
-                if geom_type == 'Point' or geom_type == 'MultiPoint':
+                # Déterminer le suffixe en fonction du type de géométrie, y compris pour les géométries 3D (suffixe Z)
+                if geom_type in ['Point', 'MultiPoint', 'PointZ', 'MultiPointZ']:
                     return "pt"
-                elif geom_type == 'LineString' or geom_type == 'MultiLineString':
+                elif geom_type in ['LineString', 'MultiLineString', 'LineStringZ', 'MultiLineStringZ']:
                     return "line"
-                elif geom_type == 'Polygon' or geom_type == 'MultiPolygon':
+                elif geom_type in ['Polygon', 'MultiPolygon', 'PolygonZ', 'MultiPolygonZ']:
                     return "poly"
                 else:
                     print(f"Géométrie non supportée : {geom_type}")
@@ -80,5 +80,3 @@ def identify_suffix(shapefile):
             print(f"Erreur lors de la lecture du fichier {shapefile}: {e}")
             return "unknown"
     return ""  # Si le fichier n'est pas un shapefile
-
-
