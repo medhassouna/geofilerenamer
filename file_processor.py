@@ -4,11 +4,11 @@ from naming_convention import apply_naming_convention, identify_suffix
 from utils import log_info, is_file_already_renamed, load_prefixes_from_json
 
 # Liste des extensions prises en charge, y compris shapefiles et autres formats géospatiaux courants
-SUPPORTED_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.gpkg', 
+SUPPORTED_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.gpkg', 
                         '.json', '.geojson', '.csv', '.kmz', '.KMZ', '.kml', '.KML', '.dwg', '.DWG', '.qpj', '.cst', '.sbn', '.sbx']
 
 # Extensions spécifiques aux fichiers composant un groupe de shapefiles
-SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.qpj', '.cst']
+SHAPEFILE_EXTENSIONS = ['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.lyr', '.sld', '.cpg', '.shp.xml', '.xml', '.qml', '.qlr', '.qpj', '.cst']
 
 # Charger les préfixes dynamiques une fois depuis le fichier metadata.json
 dynamic_prefixes = load_prefixes_from_json()

@@ -46,17 +46,25 @@ def apply_naming_convention(filename, prefix, suffix, source, year, scale):
     return f"{final_name}{ext}"
 
 
+import fiona
+
 def identify_suffix(shapefile):
     """
-    Identifie le suffixe en fonction du type de géométrie contenu dans le fichier (Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon).
+    Identifie le suffixe en fonction du type de géométrie contenu dans le fichier (Point, LineString, Polygon, etc.).
     Utilise Fiona pour lire les métadonnées du shapefile.
     """
-    # Vérifier que le fichier est bien un fichier shapefile (.shp)
     if shapefile.endswith('.shp'):
         try:
             # Ouvrir le fichier avec Fiona pour lire les métadonnées
             with fiona.open(shapefile, 'r') as src:
-                geom_type = src.schema['geometry']  # Récupérer le type de géométrie
+                # Vérifier si le fichier contient des entités
+                if len(src) == 0:
+                    print(f"Le fichier {shapefile} ne contient aucune entité.")
+                    return "empty"
+                
+                # Récupérer le type de géométrie
+                geom_type = src.schema['geometry']
+                print(f"Type de géométrie détecté dans {shapefile}: {geom_type}")
                 
                 # Déterminer le suffixe en fonction du type de géométrie
                 if geom_type == 'Point' or geom_type == 'MultiPoint':
@@ -66,10 +74,11 @@ def identify_suffix(shapefile):
                 elif geom_type == 'Polygon' or geom_type == 'MultiPolygon':
                     return "poly"
                 else:
-                    return "unknown"  # Géométrie non supportée ou inconnue
+                    print(f"Géométrie non supportée : {geom_type}")
+                    return "unknown"
         except Exception as e:
             print(f"Erreur lors de la lecture du fichier {shapefile}: {e}")
             return "unknown"
-    return ""  # Retourner une chaîne vide si le fichier n'est pas un .shp
+    return ""  # Si le fichier n'est pas un shapefile
 
 

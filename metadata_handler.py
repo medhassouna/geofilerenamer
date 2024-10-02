@@ -179,24 +179,29 @@ def validate_scale(scale):
 
 def get_valid_year(default_value):
     """
-    Demande à l'utilisateur de fournir une année au format YYYY.
+    Demande à l'utilisateur de fournir une année au format YYYY ou d'ignorer avec (i).
     Si aucune entrée n'est faite, l'utilisateur doit entrer une année valide.
     """
     while True:
-        year = input(f"Veuillez entrer l'année des données (format: YYYY) ou appuyez sur Entrée pour réutiliser '{default_value}' : ").strip()
+        year = input(f"Veuillez entrer l'année des données (format: YYYY) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+        if year.lower() == 'i':  # Ignorer et renvoyer "inconnue"
+            return "inconnue"
         if not year:
             return default_value
         if validate_year(year):
             return year
         print("Format d'année invalide. Veuillez entrer une année au format YYYY (ex: 2023).")
 
+
 def get_valid_scale(default_value):
     """
-    Demande à l'utilisateur de fournir une échelle au format valide (ex: 10K, 200K).
+    Demande à l'utilisateur de fournir une échelle au format valide (ex: 10K, 200K) ou d'ignorer avec (i).
     Si aucune entrée n'est faite, l'utilisateur doit entrer une échelle valide.
     """
     while True:
-        scale = input(f"Veuillez entrer l'échelle des données (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{default_value}' : ").strip()
+        scale = input(f"Veuillez entrer l'échelle des données (ex: 10K, 25K) ou appuyez sur Entrée pour réutiliser '{default_value}' ou tapez ( i ) pour ignorer : ").strip()
+        if scale.lower() == 'i':  # Ignorer et renvoyer "inconnue"
+            return "inconnue"
         if not scale:
             return default_value
         if validate_scale(scale):
